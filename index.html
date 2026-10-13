@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SIDETETRIS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <canvas id="game" width="1250" height="600"></canvas>
+
+  <main id="room-screen" hidden>
+    <section class="room-panel" aria-labelledby="room-title">
+      <h1 id="room-title">SIDETETRIS ROOM</h1>
+      <div class="room-info">
+        <span class="room-label">ルームコード</span>
+        <strong id="room-code-display">----</strong>
+      </div>
+      <div class="room-info">
+        <span class="room-label">ホスト名</span>
+        <strong id="room-host-name">---</strong>
+      </div>
+      <div class="room-info">
+        <span class="room-label">プレイヤー名</span>
+        <strong id="room-guest-name">参加待ち</strong>
+      </div>
+      <p id="room-status" role="status" aria-live="polite"></p>
+      <div class="room-actions">
+        <button id="room-start-button" class="room-button" type="button" hidden>対戦開始</button>
+        <button id="room-leave-button" class="room-button secondary" type="button">タイトルに戻る</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="room-leave-dialog" aria-labelledby="room-leave-title">
+    <h2 id="room-leave-title">タイトルに戻る</h2>
+    <p id="room-leave-message"></p>
+    <div class="player-name-actions">
+      <button type="button" id="room-leave-cancel">キャンセル</button>
+      <button type="button" id="room-leave-confirm">戻る</button>
+    </div>
+  </dialog>
+
+  <dialog id="room-code-dialog" aria-labelledby="room-code-title">
+    <form id="room-code-form" method="dialog">
+      <h2 id="room-code-title">ルームに入る</h2>
+      <label for="room-code-input">4桁のルームコードを入力してください。</label>
+      <input id="room-code-input" name="roomCode" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
+      <p id="room-code-error" role="alert"></p>
+      <div class="player-name-actions">
+        <button type="button" id="room-code-cancel">キャンセル</button>
+        <button type="submit">入室</button>
+      </div>
+    </form>
+  </dialog>
+
+  <button id="player-name-badge" type="button" aria-label="プレイヤー名を設定"></button>
+  <dialog id="player-name-dialog" aria-labelledby="player-name-title">
+    <form id="player-name-form" method="dialog">
+      <h2 id="player-name-title">プレイヤー名</h2>
+      <label for="player-name-input">名前は7文字までです。</label>
+      <input id="player-name-input" name="playerName" type="text" maxlength="7" autocomplete="nickname" required>
+      <p id="player-name-error" role="alert"></p>
+      <div class="player-name-actions">
+        <button type="button" id="player-name-cancel">キャンセル</button>
+        <button type="submit">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- スマホ専用の操作ボタン（PCでは非表示） -->
+  <div id="touch-controls">
+    <div class="pad pad-left">
+      <button class="tbtn" data-key="KeyW" aria-label="上へ">▲</button>
+      <button class="tbtn" data-key="KeyS" aria-label="下へ">▼</button>
+      <button class="tbtn" data-key="KeyA" aria-label="左へ">◀</button>
+    </div>
+    <div class="pad pad-right">
+      <button class="tbtn" data-key="Space" aria-label="回転">↻</button>
+      <button class="tbtn" data-key="KeyJ" aria-label="ハードドロップ">◀◀</button>
+    </div>
+  </div>
+
+  <!-- スマホを縦持ちしたときの案内 -->
+  <div id="rotate-hint">
+    <div class="rotate-icon">📱</div>
+    <p>画面を横向きにしてください</p>
+  </div>
+
+  <script src="sound.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

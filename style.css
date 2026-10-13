@@ -1,0 +1,469 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: radial-gradient(ellipse at center, #0a1226 0%, #02030a 75%);
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 縦横比 1250:600 を保ったまま画面いっぱいに拡大 */
+canvas {
+  width: min(97vw, calc(97vh * 1250 / 600));
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  background: #000;
+  touch-action: manipulation;
+  box-shadow:
+    0 0 0 2px rgba(0, 200, 255, 0.25),
+    0 0 50px rgba(0, 150, 255, 0.28);
+}
+
+/* うっすらスキャンライン（不要なら削除OK） */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.025) 0px,
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* ===== スマホ専用パーツ（通常は非表示） ===== */
+#touch-controls,
+#rotate-hint {
+  display: none;
+}
+
+#room-screen {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(97vw, calc(97vh * 1250 / 600));
+  width: min(97vw, calc(97dvh * 1250 / 600));
+  aspect-ratio: 1250 / 600;
+  box-sizing: border-box;
+  container-type: size;
+  z-index: 15;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow-y: auto;
+  background: transparent;
+  transform: translate(-50%, -50%);
+}
+
+#room-screen[hidden] {
+  display: none;
+}
+
+.room-panel {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.15cqw;
+  overflow-y: auto;
+  color: #d9fbff;
+  text-align: center;
+  background: transparent;
+  border: 2px solid rgba(0, 200, 255, 0.75);
+  border-radius: 0.72cqw;
+  box-shadow: 0 0 34px rgba(0, 150, 255, 0.3), inset 0 0 30px rgba(0, 100, 180, 0.1);
+}
+
+.room-panel h1 {
+  width: 61cqw;
+  margin: 0 0 1.6cqw;
+  color: #7df3ff;
+  font: 900 4cqw 'Orbitron', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  letter-spacing: 0.14cqw;
+  text-shadow: 0 0 16px rgba(0, 200, 255, 0.55);
+}
+
+.room-info {
+  box-sizing: border-box;
+  width: 61cqw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.72cqw;
+  margin: 0.65cqw 0;
+  padding: 0.9cqw 1.3cqw;
+  text-align: left;
+  background: rgba(15, 34, 62, 0.85);
+  border: 1px solid rgba(0, 180, 235, 0.4);
+  border-radius: 0.72cqw;
+}
+
+.room-label {
+  color: #8daac7;
+  font: 700 1.22cqw 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+.room-info strong {
+  color: #e8fbff;
+  font: 700 1.72cqw 'Orbitron', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  overflow-wrap: anywhere;
+}
+
+#room-code-display {
+  color: #ffd34d;
+  font-size: 2.45cqw;
+  letter-spacing: 0.5cqw;
+  text-shadow: 0 0 12px rgba(255, 190, 0, 0.45);
+}
+
+#room-status {
+  width: 61cqw;
+  min-height: 1.2em;
+  margin: 0.58cqw 0;
+  color: #8feeff;
+  font: 1.15cqw 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+.room-actions {
+  width: 61cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65cqw;
+  margin-top: 0.72cqw;
+}
+
+.room-button {
+  box-sizing: border-box;
+  width: 42.3cqw;
+  min-height: 4.15cqw;
+  padding: 0.5cqw 1cqw;
+  color: #d9fbff;
+  font: 700 1.36cqw 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  background: linear-gradient(180deg, rgba(0, 130, 190, 0.95), rgba(0, 65, 120, 0.95));
+  border: 1.5px solid rgba(80, 235, 255, 0.85);
+  border-radius: 0.72cqw;
+  cursor: pointer;
+}
+
+.room-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(0, 165, 220, 0.98), rgba(0, 90, 150, 0.98));
+}
+
+.room-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.room-button.secondary {
+  color: #a9bfd8;
+  background: rgba(12, 22, 40, 0.9);
+  border-color: rgba(100, 150, 190, 0.55);
+}
+
+#room-code-dialog {
+  box-sizing: border-box;
+  width: min(420px, calc(100vw - 48px));
+  padding: 28px 30px 24px;
+  color: #d9fbff;
+  background: linear-gradient(160deg, #102344, #050b19);
+  border: 2px solid rgba(0, 200, 255, 0.78);
+  border-radius: 14px;
+  box-shadow: 0 0 34px rgba(0, 150, 255, 0.35);
+}
+
+#room-leave-dialog {
+  box-sizing: border-box;
+  width: min(420px, calc(100vw - 48px));
+  padding: 28px 30px 24px;
+  color: #d9fbff;
+  background: linear-gradient(160deg, #102344, #050b19);
+  border: 2px solid rgba(0, 200, 255, 0.78);
+  border-radius: 14px;
+  box-shadow: 0 0 34px rgba(0, 150, 255, 0.35);
+}
+
+#room-leave-dialog::backdrop {
+  background: rgba(2, 4, 10, 0.82);
+}
+
+#room-leave-dialog h2 {
+  margin: 0 0 14px;
+  color: #7df3ff;
+  font: 900 22px 'Orbitron', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+#room-leave-message {
+  margin: 0;
+  color: #a9bfd8;
+  font: 16px/1.6 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+#room-code-dialog::backdrop {
+  background: rgba(2, 4, 10, 0.82);
+}
+
+#room-code-dialog h2 {
+  margin: 0 0 14px;
+  color: #7df3ff;
+  font: 900 22px 'Orbitron', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+#room-code-dialog label {
+  display: block;
+  margin-bottom: 10px;
+  color: #a9bfd8;
+  font: 16px 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+#room-code-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  color: #fff;
+  font: 700 24px 'Orbitron', sans-serif;
+  letter-spacing: 8px;
+  text-align: center;
+  background: #101329;
+  border: 1.5px solid rgba(0, 200, 255, 0.7);
+  border-radius: 8px;
+}
+
+#room-code-error {
+  min-height: 1.3em;
+  margin: 6px 0 0;
+  color: #ff9ca8;
+  font: 13px 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+#player-name-badge {
+  position: fixed;
+  z-index: 20;
+  box-sizing: border-box;
+  display: flex;
+  width: 250px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  color: #bff6ff;
+  font: 700 20px 'Orbitron', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  white-space: nowrap;
+  background: linear-gradient(180deg, rgba(0, 130, 190, 0.95), rgba(0, 65, 120, 0.95));
+  border: 2px solid rgba(80, 235, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 0 18px rgba(0, 150, 255, 0.35);
+  cursor: pointer;
+  transform-origin: top left;
+}
+
+#player-name-badge[hidden] {
+  display: none;
+}
+
+#player-name-badge:hover {
+  background: linear-gradient(180deg, rgba(0, 165, 220, 0.98), rgba(0, 90, 150, 0.98));
+}
+
+#player-name-dialog {
+  box-sizing: border-box;
+  width: min(420px, calc(100vw - 48px));
+  padding: 28px 30px 24px;
+  color: #d9fbff;
+  background: linear-gradient(160deg, #102344, #050b19);
+  border: 2px solid rgba(0, 200, 255, 0.78);
+  border-radius: 14px;
+  box-shadow: 0 0 34px rgba(0, 150, 255, 0.35);
+}
+
+#player-name-dialog::backdrop {
+  background: rgba(2, 4, 10, 0.82);
+}
+
+#player-name-dialog h2 {
+  margin: 0 0 14px;
+  color: #7df3ff;
+  font: 900 22px 'Orbitron', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  text-shadow: 0 0 12px rgba(0, 200, 255, 0.55);
+}
+
+#player-name-dialog label {
+  display: block;
+  margin-bottom: 10px;
+  color: #a9bfd8;
+  font: 16px 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+#player-name-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  color: #fff;
+  font: 18px 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  background: #101329;
+  border: 1.5px solid rgba(0, 200, 255, 0.7);
+  border-radius: 8px;
+  outline-color: #7df3ff;
+}
+
+#player-name-error {
+  min-height: 1.3em;
+  margin: 6px 0 0;
+  color: #ff9ca8;
+  font: 13px 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+}
+
+.player-name-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.player-name-actions button {
+  min-width: 92px;
+  padding: 10px 16px;
+  color: #d9fbff;
+  font: 700 15px 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  background: linear-gradient(180deg, rgba(0, 130, 190, 0.95), rgba(0, 65, 120, 0.95));
+  border: 1px solid rgba(80, 235, 255, 0.8);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.player-name-actions button:hover {
+  background: linear-gradient(180deg, rgba(0, 165, 220, 0.98), rgba(0, 90, 150, 0.98));
+}
+
+/* タッチ端末 かつ 画面の幅または高さが500px以下（=スマホ）のときだけ有効 */
+@media (hover: none) and (pointer: coarse) and (max-width: 500px),
+       (hover: none) and (pointer: coarse) and (max-height: 500px) {
+
+  :root {
+    --pad-w: 100px;  /* ボタン列の幅 */
+    --pad-gap: 10px; /* ボタン同士の間隔 */
+    /* ゲーム画面の左右に確保する余白（ボタン列＋余裕＋ノッチ対策） */
+    --side: calc(var(--pad-w) + 20px + max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)));
+  }
+
+  /* ボタンと被らないよう、左右の余白を引いた幅に収める */
+  canvas {
+    width: min(calc(100vw - 2 * var(--side)), calc(98vh * 1250 / 600));
+    width: min(calc(100vw - 2 * var(--side)), calc(98dvh * 1250 / 600));
+    border-radius: 6px;
+  }
+
+  #room-screen {
+    width: min(calc(100vw - 2 * var(--side)), calc(98vh * 1250 / 600));
+    width: min(calc(100vw - 2 * var(--side)), calc(98dvh * 1250 / 600));
+  }
+
+  #touch-controls {
+    display: block;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .pad {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--pad-w);
+    display: flex;
+    flex-direction: column;
+    gap: var(--pad-gap);
+  }
+
+  .pad-left {
+    left: calc(10px + env(safe-area-inset-left, 0px));
+  }
+
+  .pad-right {
+    right: calc(10px + env(safe-area-inset-right, 0px));
+  }
+
+  .tbtn {
+    pointer-events: auto;
+    width: 100%;
+    height: 80px;
+    padding: 0;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    font-family: 'Segoe UI Symbol', 'Apple Symbols', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+    color: #bff6ff;
+    background: rgba(10, 25, 50, 0.7);
+    border: 1.5px solid rgba(0, 200, 255, 0.6);
+    border-radius: 16px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tbtn.active {
+    background: rgba(0, 200, 255, 0.45);
+    box-shadow: 0 0 14px rgba(0, 200, 255, 0.7);
+  }
+
+  /* 高さが特に低い端末ではボタンを少し小さく */
+  @media (max-height: 360px) {
+    .tbtn {
+      height: 64px;
+      font-size: 26px;
+    }
+  }
+
+  /* 縦持ちのときは横向きを促す */
+  @media (orientation: portrait) {
+    #touch-controls {
+      display: none;
+    }
+
+    #rotate-hint {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #02040a;
+      color: #bff6ff;
+      font: 700 18px 'Orbitron', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+      letter-spacing: 1px;
+    }
+
+    #rotate-hint p {
+      margin: 0;
+    }
+
+    .rotate-icon {
+      font-size: 56px;
+      animation: rotate-phone 2.4s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes rotate-phone {
+  0%, 20%   { transform: rotate(0deg); }
+  50%, 70%  { transform: rotate(-90deg); }
+  100%      { transform: rotate(0deg); }
+}
