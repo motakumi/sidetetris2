@@ -452,7 +452,7 @@ class SideTetris {
     const n = cleared.length;
     let scoreText = "";
     if (!onlineMatchActive) {
-      const points = n === 1 ? 100 : n === 2 ? 300 : 600;
+      const points = n === 1 ? 100 : n === 2 ? 300 : n === 3 ? 600 : 1000;
       this.score += points;
       scoreText = "+" + points;
 
@@ -486,7 +486,7 @@ class SideTetris {
     const avgCol = cleared.reduce((a, b) => a + b, 0) / n;
     this.popups.push({
       text: scoreText,
-      sub: n === 2 ? "DOUBLE!" : n >= 3 ? "TRIPLE!!" : "",
+      sub: n === 2 ? "DOUBLE!" : n === 3 ? "TRIPLE!!" : n >= 4 ? "TETRIS!!" : "",
       x: (avgCol + 0.5) * BLOCK_SIZE,
       y: TITLE_SPACE + GAME_HEIGHT / 2,
       life: 1100, max: 1100,
