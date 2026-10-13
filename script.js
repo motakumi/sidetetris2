@@ -1,5 +1,5 @@
 // 起動したNode.jsサーバーに接続する
-const socket = io();
+const socket = io("https://sidetetris2.onrender.com");
 
 "use strict";
 
